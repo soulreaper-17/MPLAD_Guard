@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --gov-950: #0a1a30;
+    --gov-900: #0f294a;
+    --gov-800: #1d4674;
+    --gov-700: #1e528d;
+    --gov-500: #3882c7;
+    --gov-300: #94c0e6;
+    --gov-200: #c3daf0;
+    --gov-100: #e1ecf5;
+    --amber: #fbbf24;
+    --amber-300: #fcd34d;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased font-sans;
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e528d;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3882c7;
+}
+
+/* Landing Page Animations and Glassmorphism */
+@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 2s infinite ease-in-out;
+}
+
+.glass-card {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 192, 230, 0.2);
+  backdrop-filter: blur(12px);
+}
+
+.glass-card-amber {
+  background: rgba(10, 26, 48, 0.9);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  backdrop-filter: blur(12px);
+}
+
+/* Print styles for reports */
+@media print {
+  nav, .no-print {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .print-page {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+}
+
