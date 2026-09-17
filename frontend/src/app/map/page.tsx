@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import LeafletMap from '@/components/LeafletMap';
-import { MapPin, Filter, Layers, RefreshCw } from 'lucide-react';
+import { MapPin, RefreshCw } from 'lucide-react';
 
 export default function MapExplorerPage() {
   const [markers, setMarkers] = useState<any[]>([]);
@@ -13,9 +13,24 @@ export default function MapExplorerPage() {
   const [minPriority, setMinPriority] = useState<number | undefined>(undefined);
   const [workType, setWorkType] = useState<string>('ALL');
 
+  const [constituencyName, setConstituencyName] = useState<string>('Nalanda Lok Sabha Constituency');
+
+  const updateConstituencyTitle = () => {
+    try {
+      const saved = localStorage.getItem('selected_constituency');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.name) {
+          setConstituencyName(parsed.name);
+        }
+      }
+    } catch (e) {}
+  };
+
   const fetchMarkers = async () => {
     setLoading(true);
     setError('');
+    updateConstituencyTitle();
     try {
       const data = await api.getMapMarkers({
         min_priority: minPriority,
@@ -31,26 +46,42 @@ export default function MapExplorerPage() {
 
   useEffect(() => {
     fetchMarkers();
+
+    const handleConstituencyChange = () => {
+      fetchMarkers();
+    };
+    window.addEventListener('constituency-changed', handleConstituencyChange);
+    return () => {
+      window.removeEventListener('constituency-changed', handleConstituencyChange);
+    };
   }, [minPriority, workType]);
 
+  const mapCenter: [number, number] =
+    markers.length > 0
+      ? [
+          markers.reduce((sum, m) => sum + m.latitude, 0) / markers.length,
+          markers.reduce((sum, m) => sum + m.longitude, 0) / markers.length,
+        ]
+      : [25.1982, 85.5149];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 font-mono">
       {/* Header */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="floating-slab p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-gov-700" />
-            <h1 className="text-xl font-black text-slate-900 tracking-tight">
-              Constituency GIS Spatial Intelligence
+          <div className="flex items-center gap-2.5">
+            <MapPin className="w-5 h-5 text-[#285C7A]" />
+            <h1 className="text-lg font-black text-[#182027] tracking-wider uppercase">
+              3D GEOSPATIAL SPATIAL TERRAIN TABLE &bull; {constituencyName}
             </h1>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Geospatial distribution, proximity clustering, and potential spatial duplicate detection in Nalanda.
+          <p className="text-xs text-[#667078] font-sans mt-1">
+            Spatial distribution, proximity clustering, and duplicate asset detection across constituency infrastructure works.
           </p>
         </div>
 
         {/* Filter Controls */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
           <select
             value={minPriority === 75 ? 'HIGH' : minPriority === 45 ? 'MED' : 'ALL'}
             onChange={(e) => {
@@ -58,42 +89,42 @@ export default function MapExplorerPage() {
               else if (e.target.value === 'MED') setMinPriority(45);
               else setMinPriority(undefined);
             }}
-            className="bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-800"
+            className="bg-[#FAFAF7] border border-[#D2D7CE] rounded-xl px-4 py-2 text-xs font-bold text-[#285C7A] focus:outline-hidden"
           >
             <option value="ALL">All Priority Tiers</option>
             <option value="HIGH">High Priority Only (&ge;75)</option>
-            <option value="MED">Medium & High (&ge;45)</option>
+            <option value="MED">Medium &amp; High (&ge;45)</option>
           </select>
 
           <select
             value={workType}
             onChange={(e) => setWorkType(e.target.value)}
-            className="bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-800"
+            className="bg-[#FAFAF7] border border-[#D2D7CE] rounded-xl px-4 py-2 text-xs font-bold text-[#182027] focus:outline-hidden"
           >
             <option value="ALL">All Work Categories</option>
-            <option value="PCC Road & Drainage">PCC Road & Drainage</option>
+            <option value="PCC Road & Drainage">PCC Road &amp; Drainage</option>
             <option value="Community Hall / Center">Community Hall / Center</option>
             <option value="Solar Street Lights Installation">Solar Street Lights</option>
-            <option value="Drinking Water & RO Plant">Drinking Water & RO</option>
+            <option value="Drinking Water & RO Plant">Drinking Water &amp; RO</option>
           </select>
         </div>
       </div>
 
-      {/* Map Container */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3">
+      {/* Map Platform */}
+      <div className="floating-slab p-5 space-y-4">
         {loading ? (
-          <div className="h-[600px] flex flex-col items-center justify-center text-xs text-slate-500 space-y-2">
-            <RefreshCw className="w-6 h-6 animate-spin text-gov-600" />
-            <span>Rendering spatial intelligence map ({markers.length} points)...</span>
+          <div className="h-[640px] flex flex-col items-center justify-center text-xs text-[#667078] space-y-3">
+            <RefreshCw className="w-8 h-8 animate-spin text-[#285C7A]" />
+            <span>RENDERING SPATIAL TERRAIN MODEL ({markers.length} POINTS)...</span>
           </div>
         ) : error ? (
-          <div className="p-6 text-center text-xs text-red-600 font-semibold">{error}</div>
+          <div className="p-6 text-center text-xs text-[#C45145] font-bold">{error}</div>
         ) : (
           <LeafletMap
             markers={markers}
-            center={[25.1982, 85.5149]}
+            center={mapCenter}
             zoom={11}
-            height="620px"
+            height="650px"
           />
         )}
       </div>

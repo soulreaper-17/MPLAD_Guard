@@ -96,9 +96,10 @@ def normalize_text(text: str) -> str:
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
-def resolve_agency(raw_name: str) -> Tuple[str, str, str]:
+def resolve_agency(raw_name: str, district: str = "Nalanda", state: str = "Bihar") -> Tuple[str, str, str]:
     """
-    Given a noisy agency string, returns canonical (agency_id, canonical_name, agency_type).
+    Given an agency string, returns canonical (agency_id, canonical_name, agency_type)
+    tailored to the constituency district and state.
     """
     normalized = normalize_text(raw_name)
     
@@ -109,6 +110,29 @@ def resolve_agency(raw_name: str) -> Tuple[str, str, str]:
             if alias in normalized or normalized in alias:
                 return info["id"], info["name"], info["type"]
                 
-    # Fallback to general RWD Nalanda if unresolved
-    info = AGENCY_CANONICAL_MAP["RWD_NAL"]
-    return info["id"], info["name"], info["type"]
+    # Dynamic constituency-specific agency resolution
+    d_clean = district.replace('_', ' ').strip().title() if district else "District"
+    raw_title = raw_name.strip()
+    if not raw_title:
+        raw_title = f"Public Works Division, {d_clean}"
+        
+    low = normalized
+    if "municipal" in low or "corporation" in low or "nigam" in low or "bbmp" in low or "mcd" in low or "kmc" in low:
+        agency_type = "Municipal Corporation / Urban Local Body"
+    elif "zilla" in low or "panchayat" in low or "board" in low:
+        agency_type = "Panchayati Raj Institution"
+    elif "housing" in low or "buidco" in low or "dda" in low or "vda" in low:
+        agency_type = "State Housing & Urban Enterprise"
+    elif "health" in low or "medical" in low or "bmsicl" in low or "phed" in low or "water" in low:
+        agency_type = "Public Health & Utilities Department"
+    elif "renewable" in low or "energy" in low or "breda" in low:
+        agency_type = "State Renewable Energy Authority"
+    else:
+        agency_type = "State Engineering Department"
+
+    clean_words = [w for w in re.findall(r'[a-zA-Z0-9]+', raw_title) if len(w) > 1]
+    abbr = "".join([w[0].upper() for w in clean_words[:4]]) if clean_words else "AGY"
+    dist_slug = re.sub(r'[^a-zA-Z0-9]+', '', d_clean)[:3].upper()
+    agency_id = f"AGY-{abbr}-{dist_slug}"
+
+    return agency_id, raw_title, agency_type

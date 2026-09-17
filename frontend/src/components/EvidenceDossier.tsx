@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { EvidenceItem } from '@/lib/api';
-import { FileText, Shield, MapPin, Building, BookOpen, AlertCircle, ExternalLink } from 'lucide-react';
+import { FileText, Shield, MapPin, Building, BookOpen, Tag } from 'lucide-react';
 
 interface EvidenceDossierProps {
   evidenceItems: EvidenceItem[];
@@ -32,15 +32,15 @@ export default function EvidenceDossier({ evidenceItems, projectId }: EvidenceDo
   const getBadgeStyle = (type: string) => {
     switch (type) {
       case 'SPATIAL':
-        return 'bg-amber-100 text-amber-800 border-amber-200';
+        return 'bg-[#C88A25]/10 text-[#C88A25] border-[#C88A25]/30';
       case 'AGENCY_LOG':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
+        return 'bg-purple-50 text-purple-700 border-purple-200';
       case 'GUIDELINE_REF':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-[#285C7A]/10 text-[#285C7A] border-[#285C7A]/30';
       case 'FINANCIAL':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+        return 'bg-[#398265]/10 text-[#398265] border-[#398265]/30';
       default:
-        return 'bg-slate-100 text-slate-800 border-slate-200';
+        return 'bg-slate-100 text-slate-700 border-slate-200';
     }
   };
 
@@ -52,17 +52,17 @@ export default function EvidenceDossier({ evidenceItems, projectId }: EvidenceDo
       : evidenceItems.filter((e) => e.evidence_type === selectedType);
 
   return (
-    <div className="space-y-4">
-      {/* Evidence Filter Tabs */}
-      <div className="flex flex-wrap items-center gap-1.5 pb-2 border-b border-slate-200">
+    <div className="space-y-6 font-mono">
+      {/* Evidence Filter Tabs Bar */}
+      <div className="flex flex-wrap items-center gap-2 pb-4 border-b border-[#E4E7E1]">
         {types.map((t) => (
           <button
             key={t}
             onClick={() => setSelectedType(t)}
-            className={`px-3 py-1 rounded-md text-xs font-semibold transition ${
+            className={`tactile-light-switch px-4 py-2 rounded-full text-xs font-mono font-bold transition ${
               selectedType === t
-                ? 'bg-gov-900 text-white shadow-xs'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                ? 'tactile-light-switch-active text-white'
+                : 'text-[#667078] hover:text-[#182027]'
             }`}
           >
             {t.replace('_', ' ')}
@@ -70,59 +70,62 @@ export default function EvidenceDossier({ evidenceItems, projectId }: EvidenceDo
         ))}
       </div>
 
-      {/* Evidence Cards */}
-      <div className="space-y-3">
+      {/* Forensic Evidence Paper Sheet Stack */}
+      <div className="space-y-4">
         {filteredItems.map((ev) => {
           const Icon = getEvidenceIcon(ev.evidence_type);
           return (
             <div
               key={ev.evidence_id}
-              className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs hover:border-slate-300 transition space-y-2"
+              className="light-dossier-sheet p-6 space-y-4 shadow-[0_12px_32px_rgba(40,50,55,0.06)]"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-2.5">
-                  <div className="p-2 rounded-lg bg-slate-100 text-slate-700 mt-0.5">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3.5">
+                  <div className="p-3 rounded-xl bg-[#FAFAF7] border border-[#E4E7E1] text-[#285C7A] mt-0.5">
                     <Icon className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-bold text-slate-800">{ev.evidence_id}</span>
+                    <div className="flex items-center gap-2.5">
+                      <span className="font-mono text-xs font-bold text-[#285C7A]">[{ev.evidence_id}]</span>
                       <span
-                        className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold border ${getBadgeStyle(
+                        className={`text-[9px] font-mono px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider border ${getBadgeStyle(
                           ev.evidence_type
                         )}`}
                       >
                         {ev.evidence_type}
                       </span>
                     </div>
-                    <h4 className="text-sm font-bold text-slate-900 mt-0.5">{ev.title}</h4>
+                    <h4 className="text-base font-bold text-[#182027] font-sans mt-1">{ev.title}</h4>
                   </div>
                 </div>
 
-                <span className="text-[11px] font-mono font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-200">
+                <span className="text-[10px] font-mono font-extrabold text-[#C45145] bg-[#C45145]/10 px-3 py-1 rounded-full border border-[#C45145]/30 uppercase tracking-wider">
                   {ev.relevance} RELEVANCE
                 </span>
               </div>
 
-              {/* Content Body */}
-              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs text-slate-700 font-sans leading-relaxed">
+              {/* Evidence Text Content */}
+              <div className="recessed-light-display p-4 text-xs text-[#182027] font-sans leading-relaxed">
                 {ev.content}
               </div>
 
-              {/* Provenance footer */}
-              <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-100">
+              {/* Source Authority Footer */}
+              <div className="flex items-center justify-between text-[11px] font-mono text-[#667078] pt-3 border-t border-[#E4E7E1]">
                 <span>
-                  <strong>Source Authority:</strong> {ev.source}
+                  <strong className="text-[#182027]">SOURCE AUTHORITY:</strong> {ev.source}
                 </span>
-                <span className="text-[10px] font-mono">Verified Evidence Record</span>
+                <span className="text-[#398265] font-bold flex items-center gap-1.5">
+                  <Tag className="w-3.5 h-3.5" />
+                  <span>VERIFIED EVIDENCE RECORD</span>
+                </span>
               </div>
             </div>
           );
         })}
 
         {filteredItems.length === 0 && (
-          <div className="p-8 text-center bg-white rounded-xl border border-slate-200 text-slate-500 text-xs">
-            No evidence records found for this category filter.
+          <div className="recessed-light-display p-10 text-center text-[#667078] text-xs font-mono">
+            NO EVIDENCE ARTIFACTS FOUND FOR THIS CATEGORY FILTER.
           </div>
         )}
       </div>

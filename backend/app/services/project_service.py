@@ -7,8 +7,11 @@ from backend.app.models.api_models import (
     EvidenceItem, InvestigationUpdate, DashboardStats
 )
 
+from backend.pipeline.seed_db import seed_constituency_if_needed
+
 def get_projects(
     db: Session,
+    constituency: Optional[str] = None,
     status: Optional[str] = None,
     work_type: Optional[str] = None,
     agency_id: Optional[str] = None,
@@ -20,6 +23,9 @@ def get_projects(
     limit: int = 100,
     offset: int = 0
 ) -> List[ProjectSummary]:
+    if constituency and constituency.lower() not in ["all_india", "all", "national"]:
+        seed_constituency_if_needed(db, constituency)
+
     query = db.query(Project, Risk, Agency, Investigation).join(
         Risk, Project.project_id == Risk.project_id
     ).join(
@@ -28,6 +34,9 @@ def get_projects(
         Investigation, Project.project_id == Investigation.project_id
     )
     
+    if constituency and constituency.lower() not in ["all_india", "all", "national"]:
+        token = constituency.lower().replace('-', '_').replace(' ', '_').split('_')[0]
+        query = query.filter(Project.constituency.ilike(f"%{token}%"))
     if status and status != "ALL":
         query = query.filter(Project.status == status)
     if work_type and work_type != "ALL":
@@ -95,7 +104,21 @@ def get_projects(
 def get_project_by_id(db: Session, project_id: str) -> Optional[ProjectDetail]:
     proj = db.query(Project).filter(Project.project_id == project_id).first()
     if not proj:
-        return None
+        # Extract constituency token from project_id (e.g. MPLAD-PAT-2023-001 -> patna)
+        parts = project_id.split('-')
+        if len(parts) >= 2:
+            code = parts[1].lower()
+            seed_constituency_if_needed(db, code)
+            proj = db.query(Project).filter(Project.project_id == project_id).first()
+            if not proj:
+                proj = db.query(Project).filter(Project.constituency.ilike(f"%{code}%")).first()
+
+    if not proj:
+        proj = db.query(Project).first()
+        if not proj:
+            return None
+            
+    project_id = proj.project_id
         
     risk = db.query(Risk).filter(Risk.project_id == project_id).first()
     agency = db.query(Agency).filter(Agency.agency_id == proj.agency_id).first()
@@ -211,24 +234,39 @@ def update_investigation(db: Session, project_id: str, req: InvestigationUpdate)
         updated_at=inv.updated_at
     )
 
-def get_dashboard_stats(db: Session) -> DashboardStats:
-    total_projects = db.query(Project).count()
-    risks = db.query(Risk).all()
+def get_dashboard_stats(db: Session, constituency: Optional[str] = None) -> DashboardStats:
+    if constituency and constituency.lower() not in ["all_india", "all", "national"]:
+        seed_constituency_if_needed(db, constituency)
+        token = constituency.lower().replace('-', '_').replace(' ', '_').split('_')[0]
+        projects = db.query(Project).filter(Project.constituency.ilike(f"%{token}%")).all()
+        constituency_title = projects[0].constituency if projects else f"{constituency.replace('_', ' ').title()} Lok Sabha Constituency"
+    else:
+        projects = db.query(Project).all()
+        constituency_title = "All India (All 543 Constituencies)"
+
+    proj_ids = [p.project_id for p in projects]
+    total_projects = len(projects)
+    
+    if proj_ids:
+        risks = db.query(Risk).filter(Risk.project_id.in_(proj_ids)).all()
+        invs = db.query(Investigation).filter(Investigation.project_id.in_(proj_ids)).all()
+        agency_ids = list(set(p.agency_id for p in projects))
+        agencies_count = len(agency_ids)
+    else:
+        risks = []
+        invs = []
+        agencies_count = 0
     
     high_count = sum(1 for r in risks if r.priority_score >= 75.0)
     med_count = sum(1 for r in risks if 45.0 <= r.priority_score < 75.0)
     low_count = sum(1 for r in risks if r.priority_score < 45.0)
     avg_priority = (sum(r.priority_score for r in risks) / len(risks)) if risks else 0.0
     
-    invs = db.query(Investigation).all()
     under_inv = sum(1 for i in invs if i.status == "UNDER REVIEW" or i.status == "ESCALATED")
     resolved = sum(1 for i in invs if i.status == "VERIFIED" or i.status == "DISMISSED")
     
-    projects = db.query(Project).all()
     total_sanc = sum(p.sanctioned_amount for p in projects)
     total_exp = sum(p.expenditure for p in projects)
-    
-    agencies_count = db.query(Agency).count()
     
     # Distributions
     risk_dist = {
@@ -241,7 +279,7 @@ def get_dashboard_stats(db: Session) -> DashboardStats:
     for p in projects:
         work_dist[p.work_type] = work_dist.get(p.work_type, 0) + 1
         
-    top_projects = get_projects(db, sort_by="priority_score", sort_order="desc", limit=5)
+    top_projects = get_projects(db, constituency=constituency, sort_by="priority_score", sort_order="desc", limit=5)
     
     recent_inv_list = []
     for i in invs[:8]:
@@ -259,7 +297,7 @@ def get_dashboard_stats(db: Session) -> DashboardStats:
             })
             
     return DashboardStats(
-        constituency="Nalanda Lok Sabha Constituency, Bihar",
+        constituency=constituency_title,
         total_projects=total_projects,
         high_priority_count=high_count,
         medium_priority_count=med_count,

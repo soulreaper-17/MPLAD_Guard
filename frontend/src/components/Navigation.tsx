@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -12,41 +12,45 @@ import {
   FileText,
   BookOpen,
   LogOut,
-  User,
-  AlertTriangle,
-  Layers,
   Home,
-  ChevronRight,
+  ShieldCheck,
+  Compass,
+  User,
+  ChevronDown,
 } from 'lucide-react';
-import { LANDING_IMAGES } from '@/lib/landingAssets';
 import ConstituencySelector from '@/components/ConstituencySelector';
 
 export default function Navigation({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<{ name: string; role: string; agency: string } | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Check localStorage auth
     const savedUser = localStorage.getItem('mplad_user');
     if (savedUser) {
       try {
-        setUser(JSON.parse(savedUser));
+        const parsed = JSON.parse(savedUser);
+        setUser(parsed);
       } catch (e) {
-        // Fallback demo user
-        setUser({
-          name: 'R. K. Verma',
-          role: 'Senior Vigilance Officer',
-          agency: 'District Vigilance & Anti-Corruption Bureau',
-        });
+        setUser(null);
       }
     } else {
-      setUser({
-        name: 'R. K. Verma',
-        role: 'Senior Vigilance Officer',
-        agency: 'District Vigilance & Anti-Corruption Bureau',
-      });
+      setUser(null);
     }
+  }, [pathname]);
+
+  // Close profile dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const handleLogout = () => {
@@ -54,129 +58,203 @@ export default function Navigation({ children }: { children: React.ReactNode }) 
     router.push('/login');
   };
 
-  // Skip nav wrapper on login page or landing page (landing has its custom header)
+  // Skip nav wrapper on login page or landing page
   if (pathname === '/login' || pathname === '/') {
     return <>{children}</>;
   }
 
   const navLinks = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/queue', label: 'Investigation Queue', icon: ShieldAlert, badge: '0-100 Score' },
+    { href: '/queue', label: 'Investigation Queue', icon: ShieldAlert, badge: '0-100' },
     { href: '/agencies', label: 'Agency Directory', icon: Building2 },
     { href: '/map', label: 'GIS Spatial Map', icon: MapPin },
-    { href: '/assistant', label: 'AI Investigation Assistant', icon: Bot, badge: 'RAG' },
+    { href: '/assistant', label: 'AI Assistant', icon: Bot, badge: 'RAG' },
     { href: '/reports', label: 'Reports & Export', icon: FileText },
-    { href: '/guidelines', label: 'MoSPI Norms & Library', icon: BookOpen },
+    { href: '/guidelines', label: 'Norms & Library', icon: BookOpen },
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100">
-      {/* Main Header */}
-      <header className="bg-gov-900 text-white border-b border-gov-800 sticky top-0 z-40 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center gap-3 hover:opacity-90 transition">
-              <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-amber-400 shadow-lg shrink-0">
-                <img src={LANDING_IMAGES.logoShield} alt="3D Shield Logo" className="w-full h-full object-cover" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-lg tracking-tight text-white">MPLAD-GUARD AI</span>
-                  <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-mono px-2 py-0.5 rounded-full border border-emerald-500/40">
-                    LIVE MVP
+    <div className="min-h-screen architectural-env flex flex-col selection:bg-amber-400 selection:text-slate-950 font-sans text-slate-800">
+      
+      {/* FLOATING ARCHITECTURAL COMMAND STRIP (HEADER) */}
+      <header className="sticky top-0 z-50 bg-[#F5F6F3]/90 backdrop-blur-xl border-b border-[#E4E7E1]/80">
+        <div className="max-w-[1650px] mx-auto px-6 sm:px-8 h-18 flex items-center justify-between">
+          
+          {/* Left branding & institutional identity with Ambient Indian Glow */}
+          <div className="flex items-center gap-6">
+            <Link href="/" className="flex items-center gap-3.5 group indian-ambient-glow-wrapper">
+              {/* Ambient Soft Saffron (Left) & Soft Green (Right) Light Glow */}
+              <div className="indian-ambient-glow-bg" />
+
+              <div className="relative z-10 flex flex-col">
+                <div className="flex items-center gap-1.5">
+                  <img 
+                    src="/images/sevarth_main_logo.png" 
+                    alt="Sevaarth AI" 
+                    className="h-11 sm:h-12 w-auto mix-blend-multiply object-contain filter contrast-125" 
+                  />
+                  <span className="bg-[#285C7A]/10 text-[#285C7A] text-[9px] font-mono px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ml-1">
+                    INTELLIGENCE
                   </span>
                 </div>
-                <p className="text-[11px] text-gov-300 tracking-wide">
-                  Explainable Investigation Intelligence for MPLADS
+                <p className="text-[10px] text-[#285C7A] font-mono tracking-wide uppercase emerge-text-hover font-semibold -mt-0.5">
+                  PUBLIC EXPENDITURE INTELLIGENCE
                 </p>
               </div>
             </Link>
 
-            <div className="hidden lg:flex items-center gap-2 pl-6 border-l border-gov-800">
+            {/* Jurisdiction Selector Console */}
+            <div className="hidden lg:flex items-center pl-6 border-l border-[#E4E7E1]">
               <ConstituencySelector variant="header" />
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Right User Profile Console or Sign In Button */}
+          {user ? (
+            <div className="flex items-center gap-4 relative" ref={dropdownRef}>
+              <button
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="tactile-light-switch flex items-center gap-3 px-3.5 py-1.5 rounded-full border border-[#D2D7CE] bg-white shadow-xs hover:border-[#285C7A] transition group"
+              >
+                {/* Avatar Icon */}
+                <div className="w-8 h-8 rounded-full bg-[#285C7A] text-white flex items-center justify-center font-mono font-bold text-xs shadow-xs group-hover:scale-105 transition-transform">
+                  <User className="w-4 h-4 text-white" />
+                </div>
+
+                <div className="text-left font-mono hidden sm:block">
+                  <div className="text-xs font-bold text-[#182027] leading-tight">
+                    {user.name}
+                  </div>
+                  <div className="text-[9px] text-[#285C7A] font-medium leading-tight">
+                    {user.role}
+                  </div>
+                </div>
+
+                <ChevronDown className={`w-3.5 h-3.5 text-[#667078] transition-transform duration-200 ${profileOpen ? 'rotate-180 text-[#285C7A]' : ''}`} />
+              </button>
+
+              {/* Profile Dropdown Menu */}
+              {profileOpen && (
+                <div className="absolute right-0 top-full mt-2 w-64 bg-white/95 backdrop-blur-xl border-2 border-[#D2D7CE] rounded-2xl shadow-2xl p-3 z-[999] font-mono animate-fadeIn">
+                  <div className="p-3 bg-[#FAFAF7] rounded-xl border border-[#E4E7E1] space-y-1 mb-2">
+                    <div className="flex items-center gap-2 text-xs font-bold text-[#182027]">
+                      <ShieldCheck className="w-4 h-4 text-[#285C7A]" />
+                      <span>{user.name}</span>
+                    </div>
+                    <div className="text-[10px] text-[#667078] font-sans">
+                      {user.agency || 'Public expenditure intelligence portal'}
+                    </div>
+                    <div className="text-[9px] text-[#398265] font-mono font-bold uppercase pt-0.5">
+                      {user.role}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold text-[#C45145] hover:bg-[#C45145]/10 flex items-center justify-between transition border border-transparent hover:border-[#C45145]/20"
+                  >
+                    <span className="flex items-center gap-2">
+                      <LogOut className="w-4 h-4 text-[#C45145]" />
+                      <span>SIGN OUT OF WORKSPACE</span>
+                    </span>
+                    <span>&rarr;</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
             <Link
-              href="/"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gov-200 hover:text-white hover:bg-gov-800 transition-colors border border-gov-700"
-              title="Landing Page"
+              href="/login"
+              className="tactile-light-switch-active px-5 py-2 rounded-full text-xs font-mono font-bold text-white bg-[#182027] hover:bg-[#285C7A] transition flex items-center gap-2 shadow-sm"
             >
-              <Home className="w-3.5 h-3.5 text-amber-400" />
-              <span>Main Website</span>
+              <User className="w-3.5 h-3.5 text-[#C88A25]" />
+              <span>SIGN IN</span>
             </Link>
-            {user && (
-              <div className="hidden sm:flex flex-col text-right">
-                <span className="text-xs font-semibold text-white">{user.name}</span>
-                <span className="text-[10px] text-gov-300">{user.role}</span>
-              </div>
-            )}
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gov-200 hover:text-white hover:bg-gov-800 transition-colors border border-gov-700"
-              title="Sign Out"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Logout</span>
-            </button>
-          </div>
+          )}
+
         </div>
       </header>
 
-      {/* App Body with Sidebar & Content */}
-      <div className="flex-1 flex max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 gap-6">
-        {/* Sidebar */}
-        <aside className="w-64 shrink-0 hidden md:block">
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200/80 p-3 space-y-1 sticky top-24">
-            <div className="px-3 py-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Investigation Modules
-            </div>
-            {navLinks.map((link) => {
-              const Icon = link.icon;
-              const isActive = pathname === link.href || (link.href !== '/dashboard' && pathname.startsWith(link.href));
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                    isActive
-                      ? 'bg-gov-900 text-white shadow-sm font-semibold'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-amber-400' : 'text-slate-400'}`} />
-                    <span>{link.label}</span>
-                  </div>
-                  {link.badge && (
-                    <span
-                      className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
-                        isActive ? 'bg-gov-800 text-gov-200' : 'bg-slate-100 text-slate-600 border border-slate-200'
-                      }`}
-                    >
-                      {link.badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
+      {/* CLEAN PHYSICAL WARNING PANEL */}
+      <div className="bg-[#ECEFEA] border-b border-[#E4E7E1] px-6 py-2.5">
+        <div className="max-w-[1650px] mx-auto flex flex-col sm:flex-row items-center justify-between text-xs font-mono gap-2">
+          <div className="flex items-center gap-2.5 text-[#C88A25]">
+            <span className="w-2 h-2 rounded-full bg-[#398265] pulse-indicator" />
+            <span className="font-bold uppercase tracking-wider text-[11px]">MPLADS INTELLIGENCE:</span>
+            <span className="text-[#182027] text-[11px]">18th Lok Sabha Parliamentary Expenditure Dataset</span>
+          </div>
+          <div className="text-[#667078] text-[11px] flex items-center gap-2">
+            <ShieldAlert className="w-3.5 h-3.5 text-[#C88A25] shrink-0" />
+            <span>AI Priority Signal &rarr; Grounded Evidence &rarr; Mandatory Officer Physical Audit</span>
+          </div>
+        </div>
+      </div>
 
-            <div className="pt-4 mt-4 border-t border-slate-100">
-              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs space-y-1.5">
-                <div className="flex items-center gap-1.5 text-gov-900 font-bold text-[11px]">
-                  <Layers className="w-3.5 h-3.5 text-gov-600" />
-                  <span>5-STEP PARADIGM</span>
-                </div>
-                <p className="text-[11px] text-slate-600 font-mono leading-tight">
-                  COMPARE &rarr; PROFILE &rarr; CONNECT &rarr; EXPLAIN &rarr; VERIFY
-                </p>
+      {/* MAIN SPATIAL WORKSPACE CONTAINER */}
+      <div className="flex-1 flex max-w-[1650px] w-full mx-auto px-6 sm:px-8 py-8 gap-8 min-h-0">
+        
+        {/* SLIM FLOATING NAVIGATION RAIL (SIDEBAR) */}
+        <aside className="w-64 shrink-0 hidden md:block">
+          <div className="sticky top-28 space-y-6">
+            
+            {/* Floating Navigation Rail Frame */}
+            <div className="floating-nav-rail p-3 space-y-1.5">
+              <div className="px-3.5 py-2.5 flex items-center justify-between text-[10px] font-mono font-bold text-[#667078] uppercase tracking-widest border-b border-[#E4E7E1] mb-2">
+                <span className="flex items-center gap-2 text-[#285C7A]">
+                  <Compass className="w-4 h-4" />
+                  <span>NAVIGATION</span>
+                </span>
+                <span className="text-[#9AA3AB]">v2.5</span>
               </div>
+
+              {navLinks.map((link) => {
+                const Icon = link.icon;
+                const isActive = pathname === link.href || (link.href !== '/dashboard' && pathname.startsWith(link.href));
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`group relative flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 ${
+                      isActive
+                        ? 'tactile-light-switch-active shadow-[0_8px_20px_rgba(23,63,88,0.2)] font-bold translate-x-1'
+                        : 'text-[#667078] hover:text-[#182027] hover:bg-[#F5F6F3]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon className={`w-4 h-4 transition-colors ${isActive ? 'text-white' : 'text-[#9AA3AB] group-hover:text-[#285C7A]'}`} />
+                      <span className="tracking-tight text-[12px]">{link.label}</span>
+                    </div>
+
+                    {link.badge && (
+                      <span
+                        className={`text-[9px] font-mono px-2 py-0.5 rounded-full ${
+                          isActive
+                            ? 'bg-white/20 text-white font-bold'
+                            : 'bg-[#ECEFEA] text-[#667078] border border-[#E4E7E1]'
+                        }`}
+                      >
+                        {link.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
             </div>
+
+            {/* Methodological Reference Plaque */}
+            <div className="recessed-light-display p-4 text-[11px] font-mono space-y-2">
+              <div className="flex items-center gap-2 text-[#285C7A] font-bold text-[10px] tracking-wider uppercase">
+                <span>PARADIGM PROTOCOL</span>
+              </div>
+              <p className="text-[#667078] text-[10px] leading-relaxed border-t border-[#E4E7E1] pt-2 font-sans">
+                COMPARE &bull; PROFILE &bull; CONNECT &bull; EXPLAIN &bull; VERIFY
+              </p>
+            </div>
+
           </div>
         </aside>
 
-        {/* Main Content Area */}
+        {/* PRIMARY SPATIAL WORKSPACE */}
         <main className="flex-1 min-w-0">{children}</main>
       </div>
     </div>

@@ -13,6 +13,7 @@ router = APIRouter(prefix="/projects", tags=["Projects"])
 
 @router.get("", response_model=List[ProjectSummary])
 def list_projects(
+    constituency: Optional[str] = Query(None, description="Filter by constituency"),
     status: Optional[str] = Query(None, description="Filter by status (Ongoing, Completed, Delayed)"),
     work_type: Optional[str] = Query(None, description="Filter by work type"),
     agency_id: Optional[str] = Query(None, description="Filter by agency ID"),
@@ -26,7 +27,7 @@ def list_projects(
     db: Session = Depends(get_db)
 ):
     return get_projects(
-        db, status=status, work_type=work_type, agency_id=agency_id,
+        db, constituency=constituency, status=status, work_type=work_type, agency_id=agency_id,
         min_priority=min_priority, max_priority=max_priority, search=search,
         sort_by=sort_by, sort_order=sort_order, limit=limit, offset=offset
     )

@@ -11,6 +11,6 @@ class Settings(BaseModel):
     JWT_SECRET: str = os.getenv("JWT_SECRET", "mplad_guard_super_secret_key_2026")
     DEMO_USER_EMAIL: str = "investigator@mpladguard.gov.in"
     DEMO_USER_PASSWORD: str = "admin123"
-    DEMO_USER_NAME: str = "R. K. Verma (Senior Vigilance Officer)"
+    DEMO_USER_NAME: str = "Shivam Kumar (Senior Vigilance Officer)"
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY")
 settings = Settings()

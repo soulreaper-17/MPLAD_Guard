@@ -368,7 +368,162 @@ def generate_projects_dataset(num_records: int = 75) -> pd.DataFrame:
     df = df.drop_duplicates(subset=["project_id"]).reset_index(drop=True)
     return df
 
+
+KNOWN_CONSTITUENCY_COORDS = {
+    "kurnool": {"name": "Kurnool Lok Sabha Constituency", "state": "Andhra Pradesh", "district": "Kurnool", "lat": 15.8281, "lon": 78.0373, "blocks": ["Kurnool Sadar", "Adoni", "Yemmiganur", "Dhone", "Panyam", "Nandikotkur"], "agencies": ["Panchayati Raj Dept Kurnool", "Kurnool Municipal Corporation", "AP State Housing Corporation", "AP PWD Kurnool Division"]},
+    "varanasi": {"name": "Varanasi Lok Sabha Constituency", "state": "Uttar Pradesh", "district": "Varanasi", "lat": 25.3176, "lon": 82.9739, "blocks": ["Varanasi Sadar", "Pindra", "Sewapuri", "Araziline", "Cholapur"], "agencies": ["Varanasi Development Authority", "UP PWD Division 1 Varanasi", "UP Jal Nigam Varanasi", "Zilla Panchayat Varanasi"]},
+    "bangalore_south": {"name": "Bangalore South Lok Sabha Constituency", "state": "Karnataka", "district": "Bangalore Urban", "lat": 12.9250, "lon": 77.5890, "blocks": ["Jayanagar", "Padmanabhanagar", "BTM Layout", "Basavanagudi", "Chickpet"], "agencies": ["Bruhat Bengaluru Mahanagara Palike (BBMP)", "BBMP South Division", "Karnataka PWD Bangalore", "BWSSB South Division"]},
+    "south_delhi": {"name": "South Delhi Lok Sabha Constituency", "state": "Delhi", "district": "South Delhi", "lat": 28.5400, "lon": 77.2000, "blocks": ["Hauz Khas", "Mehrauli", "Saket", "Greater Kailash", "Malviya Nagar"], "agencies": ["Municipal Corporation of Delhi (MCD)", "Delhi PWD South Zone", "Delhi Jal Board", "DDA Infrastructure"]},
+    "patna_sahib": {"name": "Patna Sahib Lok Sabha Constituency", "state": "Bihar", "district": "Patna", "lat": 25.6093, "lon": 85.1235, "blocks": ["Patna Sadar", "Bankipore", "Kumhrar", "Digha", "Fatuha"], "agencies": ["Patna Municipal Corporation", "BUIDCO Patna", "RWD Patna Division", "Zilla Parishad Patna"]},
+    "wayanad": {"name": "Wayanad Lok Sabha Constituency", "state": "Kerala", "district": "Wayanad", "lat": 11.6854, "lon": 76.1320, "blocks": ["Kalpetta", "Mananthavady", "Sulthan Bathery", "Nilambur"], "agencies": ["Kerala PWD Wayanad", "Wayanad District Panchayat", "Irrigation Dept Wayanad"]},
+    "baramati": {"name": "Baramati Lok Sabha Constituency", "state": "Maharashtra", "district": "Pune", "lat": 18.1516, "lon": 74.5786, "blocks": ["Baramati Sadar", "Indapur", "Daund", "Purandar", "Bhor"], "agencies": ["Maharashtra PWD Baramati", "Pune Zilla Parishad", "Baramati Municipal Council"]},
+}
+
+def load_all_543_coords() -> dict:
+    coords_map = {}
+    try:
+        import json, re
+        from pathlib import Path
+        ts_path = Path(__file__).resolve().parent.parent.parent / "frontend" / "src" / "lib" / "constituenciesData.ts"
+        if ts_path.exists():
+            text = ts_path.read_text(encoding="utf-8")
+            m = re.search(r"ALL_543_CONSTITUENCIES:\s*Constituency\[\]\s*=\s*(\[.*?\]);", text, re.S)
+            if m:
+                items = json.loads(m.group(1))
+                for item in items:
+                    c_id = item["id"].lower().replace('-', '_')
+                    coords_map[c_id] = item
+    except Exception as e:
+        print("Error loading 543 coords:", e)
+    return coords_map
+
+CONSTITUENCY_543_MAP = load_all_543_coords()
+
+def generate_projects_dataset_for_constituency(constituency_key: str, num_records: int = 50) -> pd.DataFrame:
+    key_clean = constituency_key.lower().replace('-', '_').replace(' ', '_')
+    c_info = CONSTITUENCY_543_MAP.get(key_clean)
+    if not c_info:
+        for item in CONSTITUENCY_543_MAP.values():
+            if item["id"].startswith(key_clean) or key_clean.startswith(item["id"]):
+                c_info = item
+                break
+
+    if c_info and "latitude" in c_info:
+        const_name = c_info["name"]
+        const_state = c_info["state"]
+        const_district = c_info["shortName"]
+        base_lat = c_info["latitude"]
+        base_lon = c_info["longitude"]
+        blocks = [f"{const_district} Sadar", f"{const_district} North", f"{const_district} South", f"{const_district} East"]
+        agencies = [f"{const_district} PWD Division", f"{const_district} Zilla Parishad", f"{const_district} Municipal Corp"]
+    else:
+        cfg = KNOWN_CONSTITUENCY_COORDS.get(key_clean, {
+            "name": f"{constituency_key.replace('_', ' ').title()} Lok Sabha Constituency",
+            "state": "State Jurisdiction",
+            "district": constituency_key.replace('_', ' ').title(),
+            "lat": 23.5000 + (hash(constituency_key) % 1000) / 100.0,
+            "lon": 77.5000 + (hash(constituency_key + "lon") % 1000) / 100.0,
+            "blocks": [f"{constituency_key.title()} Sadar", f"{constituency_key.title()} North", f"{constituency_key.title()} South", f"{constituency_key.title()} East"],
+            "agencies": [f"{constituency_key.title()} PWD Division", f"{constituency_key.title()} Zilla Parishad", f"{constituency_key.title()} Municipal Corp"]
+        })
+        const_name = cfg["name"]
+        const_state = cfg["state"]
+        const_district = cfg["district"]
+        base_lat = cfg["lat"]
+        base_lon = cfg["lon"]
+        blocks = cfg["blocks"]
+        agencies = cfg["agencies"]
+
+    records = []
+    prefix = constituency_key[:3].upper()
+    start_year = 2022
+    
+    for i in range(1, num_records + 1):
+        year = start_year + (i % 3)
+        block = random.choice(blocks)
+        raw_agency = random.choice(agencies)
+        agency_id, agency_name, agency_type = resolve_agency(raw_agency, district=const_district, state=const_state)
+        work_cfg = random.choice(WORK_TYPE_TEMPLATES)
+        
+        tmpl = random.choice(work_cfg["templates"])
+        p1 = random.choice(PLACES_P1)
+        p2 = random.choice(PLACES_P2)
+        ward_info = random.choice(WARDS)
+        
+        title = tmpl.format(p1=p1, p2=p2, loc=f"{ward_info}, {block}")
+        
+        cost_range = work_cfg["base_cost"]
+        sanctioned = round(random.uniform(cost_range[0], cost_range[1]), 2)
+        
+        # 10% chance of cost anomaly
+        if random.random() < 0.10:
+            sanctioned = round(sanctioned * random.uniform(1.8, 2.7), 2)
+            
+        released = round(sanctioned * random.choice([1.0, 0.75, 0.50]), 2)
+        
+        dur_range = work_cfg["base_duration"]
+        base_dur = random.randint(dur_range[0], dur_range[1])
+        
+        sanction_dt = datetime(year, random.randint(1, 11), random.randint(1, 28))
+        start_dt = sanction_dt + timedelta(days=random.randint(15, 45))
+        exp_comp_dt = start_dt + timedelta(days=base_dur)
+        
+        r_val = random.random()
+        if r_val < 0.55:
+            status = "Completed"
+            delay_days = random.randint(-15, 30) if random.random() > 0.3 else random.randint(60, 240)
+            actual_comp_dt = exp_comp_dt + timedelta(days=delay_days)
+            expenditure = round(released * random.uniform(0.92, 1.0), 2)
+        elif r_val < 0.85:
+            status = "Ongoing"
+            actual_comp_dt = None
+            expenditure = round(released * random.uniform(0.40, 0.80), 2)
+        else:
+            status = "Delayed"
+            actual_comp_dt = None
+            expenditure = round(released * random.uniform(0.60, 0.95), 2)
+            
+        project_id = f"MPLAD-{prefix}-{year}-{i:03d}"
+        description = f"{title}. Project sanctioned under MPLADS for {const_name}. Work executed by {agency_name}."
+        location_id = f"LOC-{prefix}-{block[:3].upper()}-{random.randint(10, 99)}"
+        
+        lat = base_lat + random.uniform(-0.04, 0.04)
+        lon = base_lon + random.uniform(-0.04, 0.04)
+        
+        records.append({
+            "project_id": project_id,
+            "project_name": title,
+            "description": description,
+            "work_type": work_cfg["type"],
+            "status": status,
+            "constituency": const_name,
+            "district": const_district,
+            "state": const_state,
+            "agency_id": agency_id,
+            "agency_name_raw": raw_agency,
+            "agency_name": agency_name,
+            "agency_type": agency_type,
+            "location_id": location_id,
+            "block_name": block,
+            "gram_panchayat_or_ward": ward_info,
+            "assembly_constituency": f"{block} AC",
+            "sanctioned_amount": sanctioned,
+            "released_amount": released,
+            "expenditure": expenditure,
+            "sanction_date": sanction_dt,
+            "start_date": start_dt,
+            "expected_completion_date": exp_comp_dt,
+            "actual_completion_date": actual_comp_dt,
+            "latitude": lat,
+            "longitude": lon,
+            "data_source_label": f"Live Data / {const_name}",
+            "is_golden_demo": False
+        })
+        
+    return pd.DataFrame(records).drop_duplicates(subset=["project_id"]).reset_index(drop=True)
+
 if __name__ == "__main__":
     df = generate_projects_dataset(75)
     print(f"Generated {len(df)} realistic demo projects.")
+
     print(df[["project_id", "work_type", "sanctioned_amount", "agency_name", "status"]].head(10))

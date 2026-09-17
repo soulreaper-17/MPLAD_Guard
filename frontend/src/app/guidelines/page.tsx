@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { BookOpen, ShieldCheck, FileText, AlertTriangle, CheckCircle, Scale } from 'lucide-react';
+import { BookOpen, Scale } from 'lucide-react';
 
 export default function GuidelinesLibraryPage() {
   const guidelines = [
@@ -43,53 +43,53 @@ export default function GuidelinesLibraryPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 font-mono">
       {/* Header */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="floating-slab p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-gov-700" />
-            <h1 className="text-xl font-black text-slate-900 tracking-tight">
-              MoSPI Scheme Guidelines & Evidence Library
+          <div className="flex items-center gap-2.5">
+            <BookOpen className="w-5 h-5 text-[#285C7A]" />
+            <h1 className="text-lg font-black text-[#182027] tracking-wider uppercase">
+              DIGITAL ARCHIVE &bull; MoSPI SCHEME GUIDELINES &amp; NORMS
             </h1>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-[#667078] font-sans mt-1">
             Official statutory rules and compliance benchmarks governing Member of Parliament Local Area Development Scheme.
           </p>
         </div>
 
-        <span className="bg-gov-100 text-gov-800 text-xs font-mono font-bold px-3 py-1.5 rounded-lg border border-gov-200">
-          MoSPI Guidelines 2023 Edition
+        <span className="bg-[#FAFAF7] text-[#285C7A] text-xs font-mono font-bold px-4 py-2 rounded-full border border-[#E4E7E1]">
+          MoSPI GUIDELINES 2023 EDITION
         </span>
       </div>
 
-      {/* Guidelines Cards Grid */}
-      <div className="space-y-4">
+      {/* Indexed Document Panels Stack */}
+      <div className="space-y-5">
         {guidelines.map((g, idx) => (
           <div
             key={idx}
-            className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-3"
+            className="floating-slab p-6 space-y-4"
           >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <span className="bg-gov-900 text-amber-400 font-mono text-xs font-bold px-2.5 py-1 rounded">
+            <div className="flex items-start justify-between gap-4 border-b border-[#E4E7E1] pb-3">
+              <div className="flex items-center gap-3">
+                <span className="bg-[#285C7A]/10 text-[#285C7A] font-mono text-xs font-extrabold px-3 py-1 rounded-full border border-[#285C7A]/20">
                   {g.para}
                 </span>
-                <h3 className="font-bold text-slate-900 text-sm">{g.title}</h3>
+                <h3 className="font-bold text-[#182027] text-base font-sans">{g.title}</h3>
               </div>
-              <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-semibold">
+              <span className="text-[10px] font-mono text-[#667078] bg-[#FAFAF7] px-3 py-1 rounded-full border border-[#E4E7E1] font-bold uppercase">
                 {g.category}
               </span>
             </div>
 
-            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 text-xs text-slate-700 font-sans leading-relaxed">
+            <div className="recessed-light-display p-4 text-xs text-[#182027] font-sans leading-relaxed">
               &ldquo;{g.text}&rdquo;
             </div>
 
-            <div className="flex items-center gap-2 text-xs text-gov-800 font-medium">
-              <Scale className="w-4 h-4 text-gov-600 shrink-0" />
+            <div className="flex items-center gap-2 text-xs text-[#182027] font-mono pt-1">
+              <Scale className="w-4 h-4 text-[#C88A25] shrink-0" />
               <span>
-                <strong>System Analytical Mapping:</strong> {g.implication}
+                <strong className="text-[#C88A25]">SYSTEM ANALYTICAL MAPPING:</strong> <span className="font-sans text-[#667078]">{g.implication}</span>
               </span>
             </div>
           </div>

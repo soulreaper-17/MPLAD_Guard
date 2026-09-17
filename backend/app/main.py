@@ -11,6 +11,12 @@ from backend.app.api.graph_routes import router as graph_router
 from backend.app.api.assistant_routes import router as assistant_router
 from backend.app.api.report_routes import router as report_router
 
+from backend.app.database import engine
+from backend.app.models.schema import Base
+
+# Ensure all tables (including new public_reports table) exist
+Base.metadata.create_all(bind=engine)
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description=settings.PROJECT_SUBTITLE,

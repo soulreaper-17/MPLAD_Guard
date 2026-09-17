@@ -3,12 +3,18 @@ from sqlalchemy.orm import Session
 from backend.app.models.schema import Project, Risk, Agency, Location
 from backend.pipeline.feature_engineering import haversine_distance
 
+from backend.pipeline.seed_db import seed_constituency_if_needed
+
 def get_map_projects(
     db: Session,
+    constituency: Optional[str] = None,
     min_priority: Optional[float] = None,
     work_type: Optional[str] = None,
     agency_id: Optional[str] = None
 ) -> List[Dict[str, Any]]:
+    if constituency and constituency.lower() not in ["all_india", "all", "national"]:
+        seed_constituency_if_needed(db, constituency)
+
     query = db.query(Project, Risk, Agency, Location).join(
         Risk, Project.project_id == Risk.project_id
     ).join(
@@ -17,6 +23,10 @@ def get_map_projects(
         Location, Project.location_id == Location.location_id
     )
     
+    if constituency and constituency.lower() not in ["all_india", "all", "national"]:
+        seed_constituency_if_needed(db, constituency)
+        token = constituency.lower().replace('-', '_').replace(' ', '_').split('_')[0]
+        query = query.filter(Project.constituency.ilike(f"%{token}%"))
     if min_priority is not None:
         query = query.filter(Risk.priority_score >= min_priority)
     if work_type and work_type != "ALL":

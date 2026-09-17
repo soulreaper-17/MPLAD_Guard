@@ -10,6 +10,7 @@ import pandas as pd
 # Add root directory to sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
+from sqlalchemy.orm import Session
 from backend.app.database import engine, Base, SessionLocal
 from backend.app.models.schema import Project, Agency, Location, Risk, Investigation, Evidence, RelationshipLink
 from backend.pipeline.generate_demo_data import generate_projects_dataset
@@ -317,5 +318,173 @@ def seed_database():
     finally:
         db.close()
 
+
+def seed_constituency_if_needed(db: Session, constituency_key: str):
+    if not constituency_key or constituency_key.lower() in ["all_india", "all", "national"]:
+        return
+
+    clean_key = constituency_key.lower().replace('-', '_').replace(' ', '_')
+    parts = [p for p in clean_key.split('_') if p not in ["lok", "sabha", "constituency"]]
+    search_token = parts[0] if parts else clean_key
+    
+    # Check if any projects exist for this constituency
+    existing = db.query(Project).filter(
+        Project.constituency.ilike(f"%{search_token}%")
+    ).first()
+    
+    if existing:
+        return
+
+    print(f"ON-DEMAND SEEDING: Generating dataset for constituency '{constituency_key}'...")
+    from backend.pipeline.generate_demo_data import generate_projects_dataset_for_constituency
+    
+    raw_df = generate_projects_dataset_for_constituency(clean_key, 50)
+    feat_df, agency_stats, category_stats = engineer_features(raw_df)
+    ml_df = run_anomaly_models(feat_df)
+    
+    for agy_id, stats in agency_stats.items():
+        if db.query(Agency).filter(Agency.agency_id == agy_id).first():
+            continue
+        sample_row = ml_df[ml_df["agency_id"] == agy_id].iloc[0]
+        agency_obj = Agency(
+            agency_id=agy_id,
+            agency_name=sample_row["agency_name"],
+            agency_type=sample_row["agency_type"],
+            district=str(sample_row["district"]),
+            state=str(sample_row["state"]),
+            project_count=stats["project_count"],
+            completed_count=stats["completed_count"],
+            delayed_count=stats["delayed_count"],
+            completion_rate=round(stats["completion_rate"], 3),
+            delay_rate=round(stats["delay_rate"], 3),
+            average_cost=round(stats["average_cost"], 2),
+            average_delay=round(stats["average_delay"], 1),
+            risk_profile_level=stats["risk_profile_level"]
+        )
+        db.merge(agency_obj)
+    db.commit()
+    
+    inserted_locations = set()
+    for idx, row in ml_df.iterrows():
+        loc_id = row["location_id"]
+        if loc_id not in inserted_locations:
+            if not db.query(Location).filter(Location.location_id == loc_id).first():
+                loc_obj = Location(
+                    location_id=loc_id,
+                    block_name=str(row["block_name"]),
+                    gram_panchayat_or_ward=str(row["gram_panchayat_or_ward"]),
+                    assembly_constituency=str(row["assembly_constituency"]),
+                    parliamentary_constituency=str(row["constituency"]),
+                    district=str(row["district"]),
+                    state=str(row["state"]),
+                    latitude=float(row["latitude"]),
+                    longitude=float(row["longitude"])
+                )
+                db.merge(loc_obj)
+            inserted_locations.add(loc_id)
+            
+        def clean_dt(val):
+            if pd.isna(val) or val is None:
+                return None
+            if isinstance(val, pd.Timestamp):
+                return val.to_pydatetime()
+            return val
+
+        proj_obj = Project(
+            project_id=row["project_id"],
+            project_name=row["project_name"],
+            description=row["description"],
+            work_type=row["work_type"],
+            status=row["status"],
+            constituency=row["constituency"],
+            district=row["district"],
+            state=row["state"],
+            agency_id=row["agency_id"],
+            location_id=row["location_id"],
+            sanctioned_amount=float(row["sanctioned_amount"]),
+            released_amount=float(row["released_amount"]),
+            expenditure=float(row["expenditure"]),
+            sanction_date=clean_dt(row["sanction_date"]),
+            start_date=clean_dt(row["start_date"]),
+            expected_completion_date=clean_dt(row["expected_completion_date"]),
+            actual_completion_date=clean_dt(row["actual_completion_date"]),
+            latitude=float(row["latitude"]),
+            longitude=float(row["longitude"]),
+            data_source_label=str(row["data_source_label"])
+        )
+        db.merge(proj_obj)
+        
+        risk_dict = compute_risk_dimensions(row)
+        priority_score = risk_dict["priority_score"]
+        financial_risk = risk_dict["financial_risk"]
+        timeline_risk = risk_dict["timeline_risk"]
+        agency_risk = risk_dict["agency_risk"]
+        geographic_risk = risk_dict["geographic_risk"]
+        similarity_risk = risk_dict["similarity_risk"]
+        fin_exp = risk_dict["financial_explanation"]
+        time_exp = risk_dict["timeline_explanation"]
+        agy_exp = risk_dict["agency_explanation"]
+        geo_exp = risk_dict["geographic_explanation"]
+        sim_exp = risk_dict["similarity_explanation"]
+        overall_exp = risk_dict["overall_explanation"]
+        rec_items = risk_dict["recommended_verification"]
+        
+        existing_risk = db.query(Risk).filter(Risk.project_id == row["project_id"]).first()
+        if existing_risk:
+            existing_risk.priority_score = priority_score
+            existing_risk.financial_risk = financial_risk
+            existing_risk.timeline_risk = timeline_risk
+            existing_risk.agency_risk = agency_risk
+            existing_risk.geographic_risk = geographic_risk
+            existing_risk.similarity_risk = similarity_risk
+            existing_risk.is_anomaly = bool(row.get("is_anomaly", priority_score >= 70))
+            existing_risk.financial_explanation = fin_exp
+            existing_risk.timeline_explanation = time_exp
+            existing_risk.agency_explanation = agy_exp
+            existing_risk.geographic_explanation = geo_exp
+            existing_risk.similarity_explanation = sim_exp
+            existing_risk.overall_explanation = overall_exp
+            existing_risk.recommended_verification = rec_items
+        else:
+            risk_obj = Risk(
+                project_id=row["project_id"],
+                priority_score=priority_score,
+                financial_risk=financial_risk,
+                timeline_risk=timeline_risk,
+                agency_risk=agency_risk,
+                geographic_risk=geographic_risk,
+                similarity_risk=similarity_risk,
+                is_anomaly=bool(row.get("is_anomaly", priority_score >= 70)),
+                financial_explanation=fin_exp,
+                timeline_explanation=time_exp,
+                agency_explanation=agy_exp,
+                geographic_explanation=geo_exp,
+                similarity_explanation=sim_exp,
+                overall_explanation=overall_exp,
+                recommended_verification=rec_items
+            )
+            db.add(risk_obj)
+        
+        inv_status = "UNDER REVIEW" if priority_score >= 75 else ("NEW" if priority_score >= 50 else "VERIFIED")
+        existing_inv = db.query(Investigation).filter(Investigation.project_id == row["project_id"]).first()
+        if existing_inv:
+            existing_inv.status = inv_status
+            existing_inv.notes = f"Automatic vigilance screening initiated for {row['project_name']} in {row['constituency']}."
+            existing_inv.findings = [overall_exp]
+        else:
+            inv_obj = Investigation(
+                project_id=row["project_id"],
+                investigator="R. K. Verma (Senior Vigilance Officer)",
+                status=inv_status,
+                notes=f"Automatic vigilance screening initiated for {row['project_name']} in {row['constituency']}.",
+                findings=[overall_exp]
+            )
+            db.add(inv_obj)
+        
+    db.commit()
+    print(f"ON-DEMAND SEEDING COMPLETE: Loaded {len(ml_df)} projects for '{constituency_key}'.")
+
+
 if __name__ == "__main__":
     seed_database()
+

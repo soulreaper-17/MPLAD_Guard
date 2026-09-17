@@ -6,8 +6,22 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(amountLakhs: number): string {
-  if (amountLakhs === undefined || amountLakhs === null) return '₹0.00 L';
-  return `₹${amountLakhs.toFixed(2)} Lakhs`;
+  if (amountLakhs === undefined || amountLakhs === null) return '₹0.00 Lakh';
+  if (amountLakhs >= 100) {
+    return `₹${(amountLakhs / 100).toFixed(2)} Cr`;
+  }
+  return `₹${amountLakhs.toFixed(2)} Lakh`;
+}
+
+export function formatIndianRupees(rupees: number): string {
+  if (!rupees) return '₹0';
+  if (rupees >= 10000000) {
+    return `₹${(rupees / 10000000).toFixed(2)} Cr`;
+  }
+  if (rupees >= 100000) {
+    return `₹${(rupees / 100000).toFixed(2)} Lakh`;
+  }
+  return `₹${rupees.toLocaleString('en-IN')}`;
 }
 
 export function getPriorityTier(score: number): {

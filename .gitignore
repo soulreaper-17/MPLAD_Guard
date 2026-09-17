@@ -42,3 +42,8 @@ yarn-error.log*
 Thumbs.db
 .idea/
 .vscode/
+
+# Cache & Build Artifacts
+.india_ls_seats_543.geojson
+*.tsbuildinfo
+

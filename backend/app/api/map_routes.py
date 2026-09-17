@@ -8,12 +8,13 @@ router = APIRouter(prefix="/map", tags=["Geographic Intelligence"])
 
 @router.get("/markers")
 def get_markers(
+    constituency: Optional[str] = Query(None),
     min_priority: Optional[float] = Query(None),
     work_type: Optional[str] = Query(None),
     agency_id: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ):
-    return get_map_projects(db, min_priority=min_priority, work_type=work_type, agency_id=agency_id)
+    return get_map_projects(db, constituency=constituency, min_priority=min_priority, work_type=work_type, agency_id=agency_id)
 
 @router.get("/nearby/{project_id}")
 def get_nearby(

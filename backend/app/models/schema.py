@@ -154,3 +154,20 @@ class RelationshipLink(Base):
     relationship_type = Column(String(64), nullable=False) # IMPLEMENTED_BY, LOCATED_AT, PEER_SIMILAR_TO, PROXIMITY_OVERLAP, AGENCY_SHARED
     weight = Column(Float, default=1.0)
     details = Column(JSON, default=dict)
+
+
+class PublicReport(Base):
+    __tablename__ = "public_reports"
+
+    report_id = Column(Integer, primary_key=True, autoincrement=True)
+    project_id = Column(String(64), ForeignKey("projects.project_id"), nullable=False, index=True)
+    user_email = Column(String(120), nullable=False, index=True)
+    user_name = Column(String(120), default="Public Citizen")
+    complaint_text = Column(Text, nullable=False)
+    ai_critical_points = Column(JSON, default=list)
+    ai_urgency = Column(String(32), default="MEDIUM") # HIGH, MEDIUM, LOW
+    status = Column(String(32), default="PENDING") # PENDING, REVIEWED, RESOLVED
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    project = relationship("Project")
+

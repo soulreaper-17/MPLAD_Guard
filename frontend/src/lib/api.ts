@@ -199,6 +199,18 @@ async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> 
   return res.json();
 }
 
+const getActiveConstituencyId = (): string => {
+  if (typeof window === 'undefined') return 'nalanda';
+  try {
+    const saved = localStorage.getItem('selected_constituency');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && parsed.id) return parsed.id;
+    }
+  } catch (e) {}
+  return 'nalanda';
+};
+
 export const api = {
   // Auth
   login: (email: string, password: string) =>
@@ -207,11 +219,45 @@ export const api = {
       { method: 'POST', body: JSON.stringify({ email, password }) }
     ),
 
+  sendOtp: (phone_number: string) =>
+    apiFetch<{ success: boolean; masked_phone: string; message: string; expires_in: number; dev_otp?: string }>(
+      '/auth/send-otp',
+      { method: 'POST', body: JSON.stringify({ phone_number }) }
+    ),
+
+  verifyOtp: (phone_number: string, otp: string) =>
+    apiFetch<{ email: string; name: string; role: string; agency: string; token: string; phone?: string }>(
+      '/auth/verify-otp',
+      { method: 'POST', body: JSON.stringify({ phone_number, otp }) }
+    ),
+
+  sendEmailOtp: (email: string) =>
+    apiFetch<{ success: boolean; masked_email: string; message: string; expires_in: number; dev_otp?: string }>(
+      '/auth/send-email-otp',
+      { method: 'POST', body: JSON.stringify({ email }) }
+    ),
+
+  verifyEmailOtp: (email: string, otp: string) =>
+    apiFetch<{ success: boolean; verification_token: string; message: string }>(
+      '/auth/verify-email-otp',
+      { method: 'POST', body: JSON.stringify({ email, otp }) }
+    ),
+
+  register: (data: { email: string; password: string; name: string; role?: string; agency?: string; state?: string; verification_token?: string }) =>
+    apiFetch<{ email: string; name: string; role: string; agency: string; token: string }>(
+      '/auth/register',
+      { method: 'POST', body: JSON.stringify(data) }
+    ),
+
   // Dashboard
-  getDashboardStats: () => apiFetch<DashboardStats>('/dashboard/stats'),
+  getDashboardStats: (constituencyId?: string) => {
+    const cId = constituencyId || getActiveConstituencyId();
+    return apiFetch<DashboardStats>(`/dashboard/stats?constituency=${encodeURIComponent(cId)}`);
+  },
 
   // Projects
   getProjects: (params?: {
+    constituency?: string;
     status?: string;
     work_type?: string;
     agency_id?: string;
@@ -222,6 +268,8 @@ export const api = {
     sort_order?: string;
   }) => {
     const q = new URLSearchParams();
+    const cId = params?.constituency || getActiveConstituencyId();
+    if (cId) q.append('constituency', cId);
     if (params?.status) q.append('status', params.status);
     if (params?.work_type) q.append('work_type', params.work_type);
     if (params?.agency_id) q.append('agency_id', params.agency_id);
@@ -246,12 +294,18 @@ export const api = {
     }),
 
   // Agencies
-  getAgencies: () => apiFetch<AgencySummary[]>('/agencies'),
+  getAgencies: (constituencyId?: string) => {
+    const cId = constituencyId || getActiveConstituencyId();
+    return apiFetch<AgencySummary[]>(`/agencies?constituency=${encodeURIComponent(cId)}`);
+  },
+
   getAgencyById: (agencyId: string) => apiFetch<AgencyDetail>(`/agencies/${agencyId}`),
 
   // Map
-  getMapMarkers: (params?: { min_priority?: number; work_type?: string; agency_id?: string }) => {
+  getMapMarkers: (params?: { constituency?: string; min_priority?: number; work_type?: string; agency_id?: string }) => {
     const q = new URLSearchParams();
+    const cId = params?.constituency || getActiveConstituencyId();
+    if (cId) q.append('constituency', cId);
     if (params?.min_priority !== undefined) q.append('min_priority', params.min_priority.toString());
     if (params?.work_type) q.append('work_type', params.work_type);
     if (params?.agency_id) q.append('agency_id', params.agency_id);
@@ -277,4 +331,32 @@ export const api = {
   // Reports
   getProjectReport: (projectId: string) =>
     apiFetch<any>(`/reports/project/${projectId}`),
+
+  submitPublicReport: (projectId: string, data: { complaint_text: string; user_email?: string; user_name?: string }) =>
+    apiFetch<any>(`/reports/project/${projectId}/public-report`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  getPublicReports: (projectId: string, userEmail?: string) => {
+    const email = userEmail || 'citizen@mpladguard.gov.in';
+    return apiFetch<{
+      project_id: string;
+      total_reports_count: number;
+      max_capacity: number;
+      user_can_submit_today: boolean;
+      reports: Array<{
+        report_id: number;
+        project_id: string;
+        user_email: string;
+        user_name: string;
+        complaint_text: string;
+        ai_critical_points: string[];
+        ai_urgency: string;
+        status: string;
+        created_at: string;
+      }>;
+    }>(`/reports/project/${projectId}/public-reports?user_email=${encodeURIComponent(email)}`);
+  },
 };
+

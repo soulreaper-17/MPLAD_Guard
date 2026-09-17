@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { DollarSign, Clock, Building2, MapPin, Copy } from 'lucide-react';
+import { DollarSign, Clock, Building2, MapPin, Copy, Activity } from 'lucide-react';
 import { RiskDetail } from '@/lib/api';
 
 interface RiskRadarProps {
@@ -16,9 +16,9 @@ export default function RiskRadar({ risk }: RiskRadarProps) {
       weight: '25% Weight',
       icon: DollarSign,
       explanation: risk.financial_explanation,
-      color: 'bg-emerald-500',
-      textColor: 'text-emerald-700',
-      bgColor: 'bg-emerald-50',
+      color: 'bg-[#398265]',
+      textColor: 'text-[#398265]',
+      bgColor: 'bg-[#398265]/10',
     },
     {
       name: 'Timeline Risk',
@@ -26,9 +26,9 @@ export default function RiskRadar({ risk }: RiskRadarProps) {
       weight: '25% Weight',
       icon: Clock,
       explanation: risk.timeline_explanation,
-      color: 'bg-blue-500',
-      textColor: 'text-blue-700',
-      bgColor: 'bg-blue-50',
+      color: 'bg-[#285C7A]',
+      textColor: 'text-[#285C7A]',
+      bgColor: 'bg-[#285C7A]/10',
     },
     {
       name: 'Agency Risk',
@@ -36,8 +36,8 @@ export default function RiskRadar({ risk }: RiskRadarProps) {
       weight: '20% Weight',
       icon: Building2,
       explanation: risk.agency_explanation,
-      color: 'bg-purple-500',
-      textColor: 'text-purple-700',
+      color: 'bg-purple-600',
+      textColor: 'text-purple-600',
       bgColor: 'bg-purple-50',
     },
     {
@@ -46,9 +46,9 @@ export default function RiskRadar({ risk }: RiskRadarProps) {
       weight: '15% Weight',
       icon: MapPin,
       explanation: risk.geographic_explanation,
-      color: 'bg-amber-500',
-      textColor: 'text-amber-700',
-      bgColor: 'bg-amber-50',
+      color: 'bg-[#C88A25]',
+      textColor: 'text-[#C88A25]',
+      bgColor: 'bg-[#C88A25]/10',
     },
     {
       name: 'Similarity Risk',
@@ -56,59 +56,67 @@ export default function RiskRadar({ risk }: RiskRadarProps) {
       weight: '15% Weight',
       icon: Copy,
       explanation: risk.similarity_explanation,
-      color: 'bg-rose-500',
-      textColor: 'text-rose-700',
-      bgColor: 'bg-rose-50',
+      color: 'bg-[#C45145]',
+      textColor: 'text-[#C45145]',
+      bgColor: 'bg-[#C45145]/10',
     },
   ];
 
   const getBarColor = (score: number) => {
-    if (score >= 75) return 'bg-red-500';
-    if (score >= 45) return 'bg-amber-500';
-    return 'bg-emerald-500';
+    if (score >= 75) return 'bg-[#C45145]';
+    if (score >= 45) return 'bg-[#C88A25]';
+    return 'bg-[#398265]';
   };
 
   const getBadgeClass = (score: number) => {
-    if (score >= 75) return 'bg-red-100 text-red-800 border-red-200';
-    if (score >= 45) return 'bg-amber-100 text-amber-800 border-amber-200';
-    return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+    if (score >= 75) return 'bg-[#C45145]/10 text-[#C45145] border-[#C45145]/30';
+    if (score >= 45) return 'bg-[#C88A25]/10 text-[#C88A25] border-[#C88A25]/30';
+    return 'bg-[#398265]/10 text-[#398265] border-[#398265]/30';
   };
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="space-y-6 font-sans">
+      <div className="flex items-center justify-between border-b border-[#E4E7E1] pb-3 text-xs font-mono">
+        <span className="flex items-center gap-2 text-[#285C7A] font-bold uppercase tracking-wider">
+          <Activity className="w-4 h-4" />
+          <span>5-DIMENSIONAL RISK MATRIX ANALYSIS</span>
+        </span>
+        <span className="text-[#667078] text-[10px]">WEIGHTED AGGREGATE MODEL</span>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {dimensions.map((dim) => {
           const Icon = dim.icon;
           return (
             <div
               key={dim.name}
-              className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all space-y-2.5"
+              className="floating-slab floating-slab-interactive p-5 space-y-3.5"
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className={`p-1.5 rounded-lg ${dim.bgColor}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`p-2.5 rounded-xl ${dim.bgColor} border border-transparent`}>
                     <Icon className={`w-4 h-4 ${dim.textColor}`} />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800">{dim.name}</h4>
-                    <span className="text-[10px] text-slate-400 font-medium">{dim.weight}</span>
+                    <h4 className="text-xs font-mono font-bold text-[#182027] uppercase tracking-wider">{dim.name}</h4>
+                    <span className="text-[10px] font-mono text-[#667078]">{dim.weight}</span>
                   </div>
                 </div>
-                <div className={`px-2 py-0.5 rounded-md text-xs font-mono font-bold border ${getBadgeClass(dim.score)}`}>
+                <div className={`px-3 py-1 rounded-full text-xs font-mono font-bold border ${getBadgeClass(dim.score)}`}>
                   {dim.score.toFixed(1)} / 100
                 </div>
               </div>
 
-              {/* Progress bar */}
-              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+              {/* Progress bar gauge */}
+              <div className="recessed-light-display h-2.5 p-0.5 overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-500 ${getBarColor(dim.score)}`}
+                  className={`h-full rounded-full transition-all duration-700 ${getBarColor(dim.score)}`}
                   style={{ width: `${Math.min(100, Math.max(5, dim.score))}%` }}
                 />
               </div>
 
-              {/* Explanation */}
-              <p className="text-xs text-slate-600 leading-relaxed font-sans">
+              {/* Explanation Readout */}
+              <p className="text-xs text-[#182027] leading-relaxed font-sans bg-[#FAFAF7] p-3 rounded-xl border border-[#E4E7E1]">
                 {dim.explanation}
               </p>
             </div>

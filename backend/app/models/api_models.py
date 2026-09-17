@@ -7,12 +7,55 @@ class LoginRequest(BaseModel):
     email: str
     password: str
 
+class SendOtpRequest(BaseModel):
+    phone_number: str
+
+class VerifyOtpRequest(BaseModel):
+    phone_number: str
+    otp: str
+
+class SendOtpResponse(BaseModel):
+    success: bool
+    masked_phone: str
+    message: str
+    expires_in: int = 300
+    dev_otp: Optional[str] = None
+
+class SendEmailOtpRequest(BaseModel):
+    email: str
+
+class SendEmailOtpResponse(BaseModel):
+    success: bool
+    masked_email: str
+    message: str
+    expires_in: int = 300
+    dev_otp: Optional[str] = None
+
+class VerifyEmailOtpRequest(BaseModel):
+    email: str
+    otp: str
+
+class VerifyEmailOtpResponse(BaseModel):
+    success: bool
+    verification_token: str
+    message: str
+
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+    name: str
+    role: Optional[str] = "Vigilance Investigator"
+    agency: Optional[str] = "District Vigilance Bureau"
+    state: Optional[str] = "BIHAR"
+    verification_token: Optional[str] = None
+
 class UserProfile(BaseModel):
     email: str
     name: str
     role: str = "Investigator"
     agency: str = "Vigilance & Monitoring Directorate"
     token: str
+    phone: Optional[str] = None
 
 # Risk Schemas
 class RiskDetail(BaseModel):
@@ -185,3 +228,28 @@ class DashboardStats(BaseModel):
     work_type_distribution: Dict[str, int]
     top_priority_projects: List[ProjectSummary]
     recent_investigations: List[Dict[str, Any]]
+
+# Public Report Schemas
+class PublicReportCreateRequest(BaseModel):
+    user_email: Optional[str] = "citizen@mpladguard.gov.in"
+    user_name: Optional[str] = "Public Citizen"
+    complaint_text: str
+
+class PublicReportItem(BaseModel):
+    report_id: int
+    project_id: str
+    user_email: str
+    user_name: str
+    complaint_text: str
+    ai_critical_points: List[str]
+    ai_urgency: str
+    status: str
+    created_at: str
+
+class PublicReportListResponse(BaseModel):
+    project_id: str
+    total_reports_count: int
+    max_capacity: int = 1000
+    user_can_submit_today: bool = True
+    reports: List[PublicReportItem]
+

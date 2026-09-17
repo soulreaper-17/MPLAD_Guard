@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { api, AgencySummary } from '@/lib/api';
-import { formatCurrency } from '@/lib/utils';
-import { Building2, AlertTriangle, ShieldCheck, Clock, Layers, ArrowRight, RefreshCw } from 'lucide-react';
+import { Building2, ArrowRight, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AgenciesDirectoryPage() {
@@ -13,6 +12,7 @@ export default function AgenciesDirectoryPage() {
 
   useEffect(() => {
     async function loadAgencies() {
+      setLoading(true);
       try {
         const data = await api.getAgencies();
         setAgencies(data);
@@ -23,91 +23,99 @@ export default function AgenciesDirectoryPage() {
       }
     }
     loadAgencies();
+
+    const handleConstituencyChange = () => {
+      loadAgencies();
+    };
+    window.addEventListener('constituency-changed', handleConstituencyChange);
+    return () => {
+      window.removeEventListener('constituency-changed', handleConstituencyChange);
+    };
   }, []);
 
   const getRiskBadge = (level: string) => {
     switch (level) {
       case 'HIGH':
-        return 'bg-red-100 text-red-800 border-red-300';
+        return 'bg-[#C45145]/10 text-[#C45145] border-[#C45145]/30';
       case 'ELEVATED':
-        return 'bg-amber-100 text-amber-800 border-amber-300';
+        return 'bg-[#C88A25]/10 text-[#C88A25] border-[#C88A25]/30';
       default:
-        return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+        return 'bg-[#398265]/10 text-[#398265] border-[#398265]/30';
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 font-mono">
       {/* Header */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="floating-slab p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <Building2 className="w-5 h-5 text-purple-600" />
-            <h1 className="text-xl font-black text-slate-900 tracking-tight">
-              Executing Agencies Intelligence Directory
+            <h1 className="text-lg font-black text-[#182027] tracking-wider uppercase">
+              3D INSTITUTIONAL AGENCY DIRECTORY
             </h1>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Historical behavioral profiling, portfolio delay frequency, and cross-project concentration in Nalanda.
+          <p className="text-xs text-[#667078] font-sans mt-1">
+            Behavioral profiling, portfolio delay frequency, and cross-project concentration in Nalanda.
           </p>
         </div>
       </div>
 
-      {/* Grid of Agency Cards */}
+      {/* Grid of 3D Agency Identity Profiles */}
       {loading ? (
-        <div className="p-12 text-center text-xs text-slate-500">
-          <RefreshCw className="w-6 h-6 animate-spin mx-auto text-gov-600 mb-2" />
-          <span>Loading agency behavioral profiles...</span>
+        <div className="p-16 text-center text-xs text-[#667078]">
+          <RefreshCw className="w-6 h-6 animate-spin mx-auto text-[#285C7A] mb-3" />
+          <span>LOADING AGENCY BEHAVIORAL PROFILES...</span>
         </div>
       ) : error ? (
-        <div className="p-6 text-center text-xs text-red-600 font-semibold">{error}</div>
+        <div className="floating-slab bg-[#C45145]/10 border border-[#C45145]/30 p-6 text-center text-xs text-[#C45145] font-bold">{error}</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {agencies.map((agency) => (
             <div
               key={agency.agency_id}
-              className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs hover:border-slate-300 transition space-y-3"
+              className="floating-slab floating-slab-interactive p-6 space-y-5"
             >
-              <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start justify-between gap-3 border-b border-[#E4E7E1] pb-4">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-slate-500">{agency.agency_id}</span>
+                  <div className="flex items-center gap-2.5">
+                    <span className="font-mono text-xs font-bold text-[#285C7A]">{agency.agency_id}</span>
                     <span
-                      className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold border ${getRiskBadge(
+                      className={`text-[9px] font-mono px-2.5 py-0.5 rounded-full font-extrabold border uppercase tracking-wider ${getRiskBadge(
                         agency.risk_profile_level
                       )}`}
                     >
                       {agency.risk_profile_level} RISK
                     </span>
                   </div>
-                  <h3 className="font-bold text-slate-900 text-sm mt-1">{agency.agency_name}</h3>
-                  <p className="text-xs text-slate-500">{agency.agency_type}</p>
+                  <h3 className="font-bold text-[#182027] text-base font-sans mt-1">{agency.agency_name}</h3>
+                  <p className="text-xs text-[#667078] font-sans">{agency.agency_type}</p>
                 </div>
               </div>
 
-              {/* Stats row */}
-              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100 text-center">
-                <div className="bg-slate-50 p-2 rounded-lg border border-slate-200">
-                  <span className="text-[10px] text-slate-400 block font-semibold uppercase">Works</span>
-                  <span className="font-mono font-bold text-slate-800 text-sm">
+              {/* Stats Recessed Gauges */}
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="recessed-light-display p-3">
+                  <span className="text-[9px] text-[#667078] block font-bold uppercase">WORKS</span>
+                  <span className="font-mono font-extrabold text-[#182027] text-lg">
                     {agency.project_count}
                   </span>
                 </div>
-                <div className="bg-slate-50 p-2 rounded-lg border border-slate-200">
-                  <span className="text-[10px] text-slate-400 block font-semibold uppercase">Delay Rate</span>
+                <div className="recessed-light-display p-3">
+                  <span className="text-[9px] text-[#667078] block font-bold uppercase">DELAY RATE</span>
                   <span
-                    className={`font-mono font-bold text-sm ${
-                      agency.delay_rate > 0.5 ? 'text-red-600' : 'text-slate-800'
+                    className={`font-mono font-extrabold text-lg ${
+                      agency.delay_rate > 0.5 ? 'text-[#C45145]' : 'text-[#182027]'
                     }`}
                   >
                     {(agency.delay_rate * 100).toFixed(0)}%
                   </span>
                 </div>
-                <div className="bg-slate-50 p-2 rounded-lg border border-slate-200">
-                  <span className="text-[10px] text-slate-400 block font-semibold uppercase">Avg Delay</span>
+                <div className="recessed-light-display p-3">
+                  <span className="text-[9px] text-[#667078] block font-bold uppercase">AVG DELAY</span>
                   <span
-                    className={`font-mono font-bold text-sm ${
-                      agency.average_delay > 90 ? 'text-red-600' : 'text-slate-800'
+                    className={`font-mono font-extrabold text-lg ${
+                      agency.average_delay > 90 ? 'text-[#C45145]' : 'text-[#182027]'
                     }`}
                   >
                     {agency.average_delay.toFixed(0)} d
@@ -116,14 +124,14 @@ export default function AgenciesDirectoryPage() {
               </div>
 
               <div className="flex items-center justify-between pt-1">
-                <span className="text-xs text-slate-500">
-                  Avg Cost: <strong className="text-slate-800 font-mono">₹{agency.average_cost.toFixed(1)}L</strong>
+                <span className="text-xs text-[#667078]">
+                  Avg Cost: <strong className="text-[#182027] font-mono">₹{agency.average_cost.toFixed(1)}L</strong>
                 </span>
                 <Link
                   href={`/queue?agency_id=${agency.agency_id}`}
-                  className="inline-flex items-center gap-1 text-xs text-gov-700 font-bold hover:underline"
+                  className="tactile-light-switch inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs text-[#285C7A] font-bold"
                 >
-                  <span>Filter Assigned Works</span>
+                  <span>FILTER ASSIGNED WORKS</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>

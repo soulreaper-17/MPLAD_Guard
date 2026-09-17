@@ -1,81 +1,356 @@
+@import url('https://fonts.googleapis.com/css2?family=Rozha+One&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+.sevaarth-wordmark {
+  font-family: 'Rozha One', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spinSlow 40s linear infinite;
+}
+
+/* AMBIENT INDIAN COLOUR GLOW & TEXT LIFT HOVER INTERACTION */
+.indian-ambient-glow-wrapper {
+  position: relative;
+  transition: transform 450ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.indian-ambient-glow-wrapper:hover {
+  transform: translateY(-6px);
+}
+
+.indian-ambient-glow-bg {
+  position: absolute;
+  inset: -14px -28px;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 15% 50%, rgba(200, 138, 37, 0.35) 0%, transparent 68%),
+              radial-gradient(circle at 85% 50%, rgba(57, 130, 101, 0.35) 0%, transparent 68%);
+  filter: blur(22px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 500ms cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 0;
+}
+
+.group:hover .indian-ambient-glow-bg,
+.indian-ambient-glow-wrapper:hover .indian-ambient-glow-bg {
+  opacity: 1;
+}
+
+/* NAVBAR ATTRACTIVE HOVER & CLICK STYLING */
+.nav-link-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding-bottom: 4px;
+  color: #667078;
+  font-weight: 600;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-link-item:hover {
+  color: #285C7A;
+  font-weight: 800;
+  transform: scale(1.08) translateY(-2px);
+}
+
+.nav-link-item:active {
+  transform: translateY(3px) scale(0.95);
+  margin-bottom: -3px;
+  color: #173F58;
+}
+
+.nav-link-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2.5px;
+  background-color: #285C7A;
+  border-radius: 9999px;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-link-item:hover::after {
+  transform: scaleX(1);
+}
+
+.nav-btn-tactile {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.nav-btn-tactile:hover {
+  transform: scale(1.06) translateY(-2px);
+  box-shadow: 0 8px 20px rgba(40, 92, 122, 0.2) !important;
+  border-color: #285C7A !important;
+  color: #285C7A !important;
+}
+
+.nav-btn-tactile:active {
+  transform: translateY(3px) scale(0.95) !important;
+  box-shadow: inset 0 2px 5px rgba(24, 32, 39, 0.15) !important;
+  margin-bottom: -3px;
+}
+
+/* EMERGING EXPLANATORY TEXT HOVER TRANSITION */
+.emerge-text-hover {
+  opacity: 0;
+  transform: translateY(4px);
+  filter: blur(4px);
+  transition: opacity 450ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 450ms cubic-bezier(0.16, 1, 0.3, 1),
+              filter 450ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.group:hover .emerge-text-hover,
+.indian-ambient-glow-wrapper:hover .emerge-text-hover {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0px);
+}
+
 @layer base {
   :root {
-    --gov-950: #0a1a30;
-    --gov-900: #0f294a;
-    --gov-800: #1d4674;
-    --gov-700: #1e528d;
-    --gov-500: #3882c7;
-    --gov-300: #94c0e6;
-    --gov-200: #c3daf0;
-    --gov-100: #e1ecf5;
-    --amber: #fbbf24;
-    --amber-300: #fcd34d;
+    /* Premium Warm Light Architectural Palette */
+    --bg-env: #F5F6F3;
+    --bg-env-grid: rgba(200, 205, 198, 0.25);
+    --bg-secondary: #ECEFEA;
+    --bg-surface: #FFFFFF;
+    --bg-warm-surface: #FAFAF7;
+    --bg-stone: #E4E7E1;
+    --bg-[#EFEFEA]: #EFEFEA;
+    
+    /* Primary Typography Ink */
+    --text-primary: #182027;
+    --text-secondary: #667078;
+    --text-muted: #9AA3AB;
+
+    /* Institutional & Accent Colors (Used Sparingly) */
+    --gov-blue: #285C7A;
+    --deep-blue: #173F58;
+    --blue-soft: rgba(40, 92, 122, 0.08);
+
+    --saffron: #C88A25;
+    --saffron-soft: rgba(200, 138, 37, 0.1);
+
+    --verified-emerald: #398265;
+    --emerald-soft: rgba(57, 130, 101, 0.1);
+
+    --risk-red: #C45145;
+    --red-soft: rgba(196, 81, 69, 0.1);
+
+    /* Soft Daylight Shadows */
+    --shadow-subtle: 0 4px 12px rgba(24, 32, 39, 0.04);
+    --shadow-floating: 0 18px 45px rgba(40, 50, 55, 0.08);
+    --shadow-elevated: 0 24px 60px rgba(24, 32, 39, 0.12);
+    --shadow-contact: 0 2px 4px rgba(24, 32, 39, 0.06);
   }
 
-  body {
-    @apply bg-slate-50 text-slate-900 antialiased font-sans;
+  html, body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-env);
+    color: var(--text-primary);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+    letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
   }
 }
 
-/* Custom Scrollbars */
+/* 3D PERSPECTIVE & SPACE CONTAINER */
+.command-viewport {
+  perspective: 1200px;
+  perspective-origin: 50% 20%;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+/* ARCHITECTURAL LIGHT BACKGROUND ENVIRONMENT */
+.architectural-env {
+  background-color: var(--bg-env);
+  background-image: 
+    linear-gradient(to right, var(--bg-env-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--bg-env-grid) 1px, transparent 1px),
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.9) 0%, transparent 80%);
+  background-size: 40px 40px, 40px 40px, 100% 100%;
+}
+
+/* FLOATING WHITE SPATIAL SLAB (MATTE CERAMIC SURFACES & PLATES) */
+.floating-slab {
+  background: var(--bg-surface);
+  border: 1px solid rgba(218, 222, 214, 0.85);
+  box-shadow: 
+    0 20px 50px rgba(40, 50, 55, 0.07),
+    0 4px 14px rgba(24, 32, 39, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  transform-style: preserve-3d;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+}
+
+.floating-slab-interactive:hover {
+  transform: translateY(-5px) translateZ(10px);
+  box-shadow: 
+    0 30px 70px rgba(40, 50, 55, 0.11),
+    0 8px 24px rgba(24, 32, 39, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+  border-color: rgba(40, 92, 122, 0.4);
+}
+
+/* 3D FLOATING SEMANTIC REASON PLATES */
+@keyframes spatialFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(0.3deg);
+  }
+}
+
+.floating-semantic-plate {
+  animation: spatialFloat 6s ease-in-out infinite;
+}
+
+/* ORGANIC 3D CERAMIC DISC OBJECT */
+.ceramic-disc {
+  background: radial-gradient(circle at 35% 35%, #FFFFFF 0%, #F5F6F3 100%);
+  border: 1px solid rgba(228, 231, 225, 0.9);
+  box-shadow: 
+    0 24px 60px rgba(40, 50, 55, 0.12),
+    inset 0 2px 4px rgba(255, 255, 255, 1),
+    inset 0 -4px 12px rgba(200, 205, 198, 0.4);
+  border-radius: 9999px;
+  transform-style: preserve-3d;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ceramic-disc:hover {
+  transform: translateY(-6px) translateZ(12px);
+  box-shadow: 
+    0 36px 80px rgba(40, 50, 55, 0.16),
+    inset 0 2px 4px rgba(255, 255, 255, 1);
+}
+
+/* RECESSED LIGHT DISPLAY SURFACE */
+.recessed-light-display {
+  background: var(--bg-warm-surface);
+  border: 1px solid rgba(228, 231, 225, 0.9);
+  box-shadow: 
+    inset 0 2px 4px rgba(24, 32, 39, 0.03),
+    0 1px 0 rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+}
+
+/* TACTILE LIGHT SWITCH / BUTTON */
+.tactile-light-switch {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FAFAF7 100%);
+  border: 1px solid rgba(210, 215, 206, 0.8);
+  box-shadow: 
+    0 4px 10px rgba(24, 32, 39, 0.04),
+    0 1px 2px rgba(24, 32, 39, 0.02);
+  color: var(--text-primary);
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tactile-light-switch:hover {
+  background: #FFFFFF;
+  border-color: var(--gov-blue);
+  color: var(--gov-blue);
+  box-shadow: 
+    0 6px 16px rgba(40, 52, 65, 0.12);
+}
+
+.tactile-light-switch:active {
+  box-shadow: inset 0 2px 4px rgba(24, 32, 39, 0.06);
+}
+
+.tactile-light-switch-active {
+  background: var(--deep-blue);
+  border: 1px solid var(--deep-blue);
+  color: #FFFFFF;
+  box-shadow: 
+    0 8px 20px rgba(23, 63, 88, 0.25);
+}
+
+/* SLIM FLOATING NAVIGATION RAIL */
+.floating-nav-rail {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(228, 231, 225, 0.9);
+  box-shadow: 0 16px 40px rgba(40, 50, 55, 0.07);
+  border-radius: 20px;
+}
+
+/* EDITORIAL GIANT NUMBER TYPOGRAPHY */
+.editorial-number {
+  font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  color: var(--text-primary);
+}
+
+/* PHYSICAL PAPER DOSSIER SHEET */
+.light-dossier-sheet {
+  background: #FFFFFF;
+  border: 1px solid rgba(228, 231, 225, 0.9);
+  box-shadow: 
+    0 12px 32px rgba(40, 50, 55, 0.06),
+    0 2px 6px rgba(24, 32, 39, 0.02);
+  border-radius: 12px;
+  position: relative;
+}
+
+/* CUSTOM LIGHT SCROLLBARS */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: var(--bg-env);
 }
+
 ::-webkit-scrollbar-thumb {
-  background: #1e528d;
+  background: #D2D7CE;
   border-radius: 3px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: #3882c7;
+  background: #A8B0A2;
 }
 
-/* Landing Page Animations and Glassmorphism */
-@keyframes bounce-slow {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(8px);
-  }
-}
-
-.animate-bounce-slow {
-  animation: bounce-slow 2s infinite ease-in-out;
-}
-
-.glass-card {
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(148, 192, 230, 0.2);
-  backdrop-filter: blur(12px);
-}
-
-.glass-card-amber {
-  background: rgba(10, 26, 48, 0.9);
-  border: 1px solid rgba(251, 191, 36, 0.3);
-  backdrop-filter: blur(12px);
-}
-
-/* Print styles for reports */
+/* PRINT STYLES */
 @media print {
-  nav, .no-print {
+  body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+  }
+  .no-print {
     display: none !important;
   }
-  body {
-    background: white !important;
-    color: black !important;
-  }
   .print-page {
+    background: #FFFFFF !important;
+    color: #000000 !important;
     box-shadow: none !important;
     border: none !important;
     padding: 0 !important;
   }
 }
-

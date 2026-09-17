@@ -3,8 +3,17 @@ from sqlalchemy.orm import Session
 from backend.app.models.schema import Agency, Project, Risk, Investigation
 from backend.app.models.api_models import AgencySummary, AgencyDetail, ProjectSummary
 
-def get_agencies(db: Session) -> List[AgencySummary]:
-    agencies = db.query(Agency).order_by(Agency.project_count.desc()).all()
+from backend.pipeline.seed_db import seed_constituency_if_needed
+
+def get_agencies(db: Session, constituency: Optional[str] = None) -> List[AgencySummary]:
+    if constituency and constituency.lower() not in ["all_india", "all", "national"]:
+        seed_constituency_if_needed(db, constituency)
+        token = constituency.lower().replace('-', '_').replace(' ', '_').split('_')[0]
+        agency_ids = [r[0] for r in db.query(Project.agency_id).filter(Project.constituency.ilike(f"%{token}%")).distinct().all()]
+        agencies = db.query(Agency).filter(Agency.agency_id.in_(agency_ids)).order_by(Agency.project_count.desc()).all()
+    else:
+        agencies = db.query(Agency).order_by(Agency.project_count.desc()).all()
+
     summaries = []
     for a in agencies:
         summaries.append(AgencySummary(
